@@ -1,0 +1,33 @@
+name: Schedule Social Media Post
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Run at 12:00 UTC every day
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'  # Choose a Python version
+
+    - name: Install dependencies
+      run: pip install tweepy # and any other libraries you need
+
+    - name: Set secrets
+      #Important to set these up as secrets in the github repo.
+      env:
+        TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+        TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+
+    - name: Run posting script
+      run: python post.py

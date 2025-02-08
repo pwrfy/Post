@@ -1,2 +1,2 @@
 # Post
-** automated social media posting **
+**automated social media posting**

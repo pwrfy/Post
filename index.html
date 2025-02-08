@@ -1,17 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>My Website</title>
-    <link rel="stylesheet" href="./style.css">
-    <link rel="icon" href="./favicon.ico" type="image/x-icon">
-  </head>
-  <body>
-    <main>
-        <h1>Welcome to My Website</h1>  
-    </main>
-    <script src="index.js"></script>
-  </body>
+<html>
+<head>
+    <title>Social Media Poster</title>
+    <style>
+      label { display: block; margin-bottom: 5px; }
+      textarea { width: 300px; height: 100px; }
+      button { padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Schedule a Post</h1>
+
+    <label for="postContent">Post Content:</label>
+    <textarea id="postContent" name="postContent"></textarea><br>
+
+    <label for="platform">Platform:</label>
+    <select id="platform" name="platform">
+        <option value="twitter">Twitter</option>
+        <!-- Add other platforms if you're integrating them -->
+        <!-- <option value="facebook">Facebook</option> -->
+        <!-- <option value="linkedin">LinkedIn</option> -->
+    </select><br>
+
+    <button onclick="savePost()">Save Post</button>
+
+    <script>
+      function savePost() {
+        const postContent = document.getElementById('postContent').value;
+        const platform = document.getElementById('platform').value;
+
+        if (postContent.trim() === "") {
+            alert("Please enter post content.");
+            return;
+        }
+
+        const postData = {
+          content: postContent,
+          platform: platform
+        };
+
+        // In a real application, you would save this data to a file or database.
+        // For this simple example, we'll just log it to the console.
+        console.log("Post Data:", postData);
+        // Add code to write to the `post_content.json` file.
+        writePostData(postData);
+
+      }
+
+function writePostData(postData) {
+//This function handles writing our post to a JSON.  A bit involved, but very useful.
+fetch('post_content.json')
+.then(response => {
+    if (!response.ok) {
+        // If the file doesn't exist, create an empty array
+        if (response.status === 404) {
+            return [];
+        }
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+})
+.then(existingData => {
+    if (!Array.isArray(existingData))
+    {
+      existingData = []; //Ensure that we always have an array.
+    }
+    existingData.push(postData);  // Add the new post data
+
+    // Write the updated data back to the file (simulated using a POST request)
+    //GitHub pages does not support server-side, but it is helpful to understand how
+    //we *would* do it.
+    console.log("Updated post data:", existingData);
+    alert("Post Data saved.  Check console.  You will need to COMMIT the changes to the JSON file for it to post.  This is important!");
+
+})
+.catch(error => {
+    console.error('There has been a problem with your fetch operation:', error);
+});
+}
+</script>
+</body>
 </html>
+```

@@ -1,84 +1,201 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Media Poster</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
     <style>
-      label { display: block; margin-bottom: 5px; }
-      textarea { width: 300px; height: 100px; }
-      button { padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .post-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        .platform-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .platform-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        .character-count {
+            text-align: right;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .preview-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .preview-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Schedule a Post</h1>
+    <div class="container">
+        <h1>Social Media Poster</h1>
+        <form class="post-form" id="postForm">
+            <div class="platform-selector">
+                <label class="platform-checkbox">
+                    <input type="checkbox" name="platforms" value="twitter"> Twitter
+                </label>
+                <label class="platform-checkbox">
+                    <input type="checkbox" name="platforms" value="linkedin"> LinkedIn
+                </label>
+                <label class="platform-checkbox">
+                    <input type="checkbox" name="platforms" value="facebook"> Facebook
+                </label>
+            </div>
+            
+            <div>
+                <textarea id="postContent" placeholder="Write your post here..."></textarea>
+                <div class="character-count">Characters: <span id="charCount">0</span></div>
+                <div id="errorMessage" class="error"></div>
+            </div>
 
-    <label for="postContent">Post Content:</label>
-    <textarea id="postContent" name="postContent"></textarea><br>
+            <div class="preview-section">
+                <h3>Preview</h3>
+                <div id="preview" class="preview-content"></div>
+            </div>
 
-    <label for="platform">Platform:</label>
-    <select id="platform" name="platform">
-        <option value="twitter">Twitter</option>
-        <!-- Add other platforms if you're integrating them -->
-        <!-- <option value="facebook">Facebook</option> -->
-        <!-- <option value="linkedin">LinkedIn</option> -->
-    </select><br>
-
-    <button onclick="savePost()">Save Post</button>
+            <button type="submit">Schedule Post</button>
+        </form>
+    </div>
 
     <script>
-      function savePost() {
-        const postContent = document.getElementById('postContent').value;
-        const platform = document.getElementById('platform').value;
+        const postForm = document.getElementById('postForm');
+        const postContent = document.getElementById('postContent');
+        const charCount = document.getElementById('charCount');
+        const preview = document.getElementById('preview');
+        const errorMessage = document.getElementById('errorMessage');
 
-        if (postContent.trim() === "") {
-            alert("Please enter post content.");
-            return;
-        }
-
-        const postData = {
-          content: postContent,
-          platform: platform
+        // Platform-specific character limits
+        const characterLimits = {
+            twitter: 280,
+            linkedin: 3000,
+            facebook: 63206
         };
 
-        // In a real application, you would save this data to a file or database.
-        // For this simple example, we'll just log it to the console.
-        console.log("Post Data:", postData);
-        // Add code to write to the `post_content.json` file.
-        writePostData(postData);
+        // Update character count and preview
+        postContent.addEventListener('input', () => {
+            const text = postContent.value;
+            charCount.textContent = text.length;
+            
+            // Update preview with sanitized content
+            preview.textContent = text;
 
-      }
+            // Check character limits for selected platforms
+            const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platforms"]:checked'))
+                .map(input => input.value);
 
-function writePostData(postData) {
-//This function handles writing our post to a JSON.  A bit involved, but very useful.
-fetch('post_content.json')
-.then(response => {
-    if (!response.ok) {
-        // If the file doesn't exist, create an empty array
-        if (response.status === 404) {
-            return [];
-        }
-        throw new Error('Network response was not ok');
-    }
-    return response.json();
-})
-.then(existingData => {
-    if (!Array.isArray(existingData))
-    {
-      existingData = []; //Ensure that we always have an array.
-    }
-    existingData.push(postData);  // Add the new post data
+            let error = '';
+            selectedPlatforms.forEach(platform => {
+                if (text.length > characterLimits[platform]) {
+                    error += `Post exceeds ${platform} character limit (${characterLimits[platform]}). `;
+                }
+            });
 
-    // Write the updated data back to the file (simulated using a POST request)
-    //GitHub pages does not support server-side, but it is helpful to understand how
-    //we *would* do it.
-    console.log("Updated post data:", existingData);
-    alert("Post Data saved.  Check console.  You will need to COMMIT the changes to the JSON file for it to post.  This is important!");
+            errorMessage.textContent = error;
+        });
 
-})
-.catch(error => {
-    console.error('There has been a problem with your fetch operation:', error);
-});
-}
-</script>
+        // Handle form submission
+        postForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const selectedPlatforms = Array.from(document.querySelectorAll('input[name="platforms"]:checked'))
+                .map(input => input.value);
+
+            if (selectedPlatforms.length === 0) {
+                alert('Please select at least one platform');
+                return;
+            }
+
+            if (postContent.value.trim() === '') {
+                alert('Please enter some content for your post');
+                return;
+            }
+
+            // Here you would typically send the data to your backend
+            const postData = {
+                content: DOMPurify.sanitize(postContent.value),
+                platforms: selectedPlatforms,
+                scheduledTime: new Date().toISOString()
+            };
+
+            console.log('Post data:', postData);
+            alert('Post scheduled successfully! (This is a demo - no actual posting occurs)');
+        });
+    </script>
 </body>
 </html>
-```
